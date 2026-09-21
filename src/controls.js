@@ -8,7 +8,6 @@
  *            around the truck and updates real-time soft shadows.
  */
 
-import * as THREE from 'three';
 import { soundManager } from './audio.js';
 
 function lerp(a, b, t) {
@@ -16,13 +15,11 @@ function lerp(a, b, t) {
 }
 
 export class Controls {
-  constructor(camera, sunLight, sunMesh, sunDirection, skyMat, domElement) {
+  constructor(camera, sunLight, sunMesh, sunDirection, domElement) {
     this.camera       = camera;
     this.sunLight     = sunLight;
     this.sunMesh      = sunMesh;
     this.sunDirection = sunDirection;
-    this.skyMat       = skyMat;
-    this.domElement   = domElement;
 
     // ── Spherical Camera Orbit State ────────────────────────────────────────
     this.theta  = 0.04;   // Cinematic chase angle directly behind truck in left lane
@@ -53,6 +50,13 @@ export class Controls {
     this._onKeyUp     = this._onKeyUp.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onWheel     = this._onWheel.bind(this);
+    this._onContextMenu = (event) => {
+      event.preventDefault();
+      soundManager.honk();
+    };
+    this._onBlur = () => { this.keys = {}; };
+    domElement.addEventListener('contextmenu', this._onContextMenu);
+    window.addEventListener('blur', this._onBlur);
 
     window.addEventListener('keydown',   this._onKeyDown);
     window.addEventListener('keyup',     this._onKeyUp);
@@ -90,7 +94,8 @@ export class Controls {
     if (e.code === 'Digit3') this.setPreset(3);
 
     // Audio toggle hotkey
-    if (e.code === 'KeyM') {
+    if (e.code === 'KeyH' && !e.repeat) soundManager.honk();
+    if (e.code === 'KeyM' && !e.repeat) {
       soundManager.toggle();
     }
   }
@@ -120,8 +125,8 @@ export class Controls {
     // 1. Process Keyboard Controls
     if (this.keys['ArrowLeft']  || this.keys['KeyA']) this.targetTheta -= ROTATE_SPEED;
     if (this.keys['ArrowRight'] || this.keys['KeyD']) this.targetTheta += ROTATE_SPEED;
-    if (this.keys['ArrowUp']    || this.keys['KeyW']) this.targetPhi   -= ROTATE_SPEED;
-    if (this.keys['ArrowDown']  || this.keys['KeyS']) this.targetPhi   += ROTATE_SPEED;
+    if (this.keys['ArrowUp']    || this.keys['KeyW']) this.targetPhi   += ROTATE_SPEED;
+    if (this.keys['ArrowDown']  || this.keys['KeyS']) this.targetPhi   -= ROTATE_SPEED;
     if (this.keys['Equal']      || this.keys['NumpadAdd'])      this.targetRadius -= ZOOM_SPEED;
     if (this.keys['Minus']      || this.keys['NumpadSubtract']) this.targetRadius += ZOOM_SPEED;
 
@@ -155,22 +160,9 @@ export class Controls {
     this.sunLight.target.position.copy(targetPos);
 
     // Update Normalized Sun Direction for Sky & Sun Mesh
-    const dir = new THREE.Vector3(lx - targetPos.x, ly, lz - targetPos.z).normalize();
-    this.sunDirection.copy(dir);
-
-    if (this.skyMat && this.skyMat.uniforms && this.skyMat.uniforms.uSunDirection) {
-      this.skyMat.uniforms.uSunDirection.value.copy(dir);
-    }
-
-    if (this.sunMesh) {
-      this.sunMesh.position.copy(dir).multiplyScalar(220);
-    }
+    // The sky uniform shares this vector, so updating it also updates the shader.
+    this.sunDirection.set(lx - targetPos.x, ly, lz - targetPos.z).normalize();
+    this.sunMesh.position.copy(this.sunDirection).multiplyScalar(220);
   }
 
-  dispose() {
-    window.removeEventListener('keydown',   this._onKeyDown);
-    window.removeEventListener('keyup',     this._onKeyUp);
-    window.removeEventListener('wheel',     this._onWheel);
-    window.removeEventListener('mousemove', this._onMouseMove);
-  }
 }

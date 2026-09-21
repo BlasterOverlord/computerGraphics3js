@@ -43,7 +43,6 @@ async function init() {
     0.1,                                    // Near clipping plane
     1000                                    // Far clipping plane
   );
-  camera.position.set(4, 4, 16);
 
   // ── 4. Lighting System ────────────────────────────────────────────────────
   // Main Directional Sun Light (Position controlled by mouse interaction)
@@ -71,7 +70,7 @@ async function init() {
   scene.add(hemiLight);
 
   // ── 5. Build Environment Scene ────────────────────────────────────────────
-  const { sunMesh, sunDirection, skyMat, update: updateScene } = await buildScene(scene, sunLight);
+  const { sunMesh, sunDirection, update: updateScene } = await buildScene(scene, sunLight);
 
   // ── 6. Load Authentic Bangladeshi Truck Model ─────────────────────────────
   const truck = await loadTruck();
@@ -86,7 +85,6 @@ async function init() {
     sunLight,
     sunMesh,
     sunDirection,
-    skyMat,
     renderer.domElement
   );
 
@@ -95,6 +93,7 @@ async function init() {
   function updateSoundUI(isPlaying) {
     if (btnSound) {
       btnSound.textContent = isPlaying ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+      btnSound.setAttribute('aria-pressed', String(isPlaying));
       btnSound.style.background = isPlaying ? 'rgba(46, 125, 50, 0.35)' : 'rgba(255, 120, 60, 0.2)';
       btnSound.style.borderColor = isPlaying ? 'rgba(129, 199, 132, 0.7)' : 'rgba(255, 140, 80, 0.5)';
     }
@@ -134,13 +133,11 @@ async function init() {
     // 1. Animate Truck Wheels (Rotates wheels requirement)
     truck.update(delta, HIGHWAY_SPEED);
 
-    // 2. Animate Endless Highway & Traffic Flow
+    // Update controls before the shader uniforms so lighting matches this frame.
+    controls.update(truckCenter);
     updateScene(delta, HIGHWAY_SPEED, camera);
 
-    // 3. Update Camera Orbit & Mouse-Controlled Sun Position
-    controls.update(truckCenter);
-
-    // 4. Render Scene
+    // Render Scene
     renderer.render(scene, camera);
   }
 

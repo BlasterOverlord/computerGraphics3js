@@ -76,6 +76,9 @@ The project demonstrates core principles of modern 3D computer graphics:
 
 ## 🎨 Key Features & Visual Highlights
 
+- **Drifting sunset clouds**: A time-driven procedural cloud layer in the original sky shader adds movement and soft golden edges without extra meshes or downloads. Mouse-controlled sunlight remains active.
+- **Truck horn from a sound file**: Right-click the scene or press **H** to play `public/sounds/truck-horn.mp3`. Playback starts only on a user gesture and repeated input cannot overlap the sound. The **M / Sound** toggle controls the background loop separately.
+
 - **Left-Lane Authentic Bangladeshi Driving**:
   - The truck travels forward in the **left lane** (`X = -2.65`), reflecting Bangladeshi left-hand traffic regulations.
   - Oncoming vehicles travel in the **right lane** (`X = +2.65`) facing the player with illuminated headlights.
@@ -108,7 +111,8 @@ computerGraphics3js/
 │   │   ├── car3_minivan.glb    # Traffic yellow minivan
 │   │   └── car1_truck.glb      # Traffic pickup truck
 │   └── sounds/
-│       └── highway.mp3     # Continuous ambient highway background audio
+│       ├── highway.mp3     # Continuous ambient highway background audio
+│       └── truck-horn.mp3  # User-supplied truck horn recording
 └── src/                    # JavaScript & GLSL source code
     ├── main.js             # Master orchestrator, scene lifecycle, animation loop, resize
     ├── scene.js            # Infinite 2-lane road, streetlights, guardrails, trees, traffic fleet
@@ -258,9 +262,10 @@ Implemented in [`src/controls.js`](file:///c:/code/computerGraphics3js/src/contr
 | Input | Target | Description |
 |---|---|---|
 | <kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> | Camera Orbit | Orbit horizontally around the truck center |
-| <kbd>↑</kbd> <kbd>↓</kbd> or <kbd>W</kbd> <kbd>S</kbd> | Camera Height | Adjust vertical elevation angle |
+| <kbd>↑</kbd> <kbd>↓</kbd> or <kbd>W</kbd> <kbd>S</kbd> | Camera Height | W / ↑ raises the camera; S / ↓ lowers it |
 | <kbd>+</kbd> <kbd>−</kbd> or **Mouse Wheel** | Camera Zoom | Smoothly zoom in and out |
 | **Move Mouse** | Sun Position | Rotates the sun across the sky and casts dynamic soft shadows |
+| <kbd>H</kbd> or **Right Click** on scene | Truck Horn | Play the truck horn MP3 (independent of background sound) |
 | <kbd>1</kbd> or **"1: Chase"** Button | View Preset | Cinematic chase camera behind the truck in the left lane |
 | <kbd>2</kbd> or **"2: Side"** Button | View Preset | Side profile camera showing the wheel animation and Bangla typography |
 | <kbd>3</kbd> or **"3: Front"** Button | View Preset | Low-angle front camera facing oncoming traffic and truck cab |
@@ -290,6 +295,12 @@ Once started, open your browser to the printed local URL:
 ```
 http://localhost:5173/
 ```
+
+### Truck Horn Sound
+
+The horn recording is included at **`public/sounds/truck-horn.mp3`**. To replace it, save a short MP3 recording you have permission to use at the same path.
+
+Refresh the page, then **right-click the scene** or press **H**. No code changes are needed. If the recording is missing or cannot be played, the scene continues normally and a console warning explains the problem. After replacing the sound, run `npm run build` again for deployment. The original HUD is unchanged; horn controls are documented here. There is no synthesized fallback.
 
 ### Production Build & Preview
 ```bash

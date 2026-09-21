@@ -24,8 +24,20 @@ export const skyVertexShader = /* glsl */ `
 
 export const skyFragmentShader = /* glsl */ `
   uniform vec3 uSunDirection; // Normalized world direction toward the sun
+  uniform float uTime;
 
   varying vec3 vWorldPosition;
+
+  float cloudNoise(vec2 p) {
+    vec2 cell = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    vec4 n = fract(sin(vec4(dot(cell, vec2(127.1, 311.7)),
+      dot(cell + vec2(1, 0), vec2(127.1, 311.7)),
+      dot(cell + vec2(0, 1), vec2(127.1, 311.7)),
+      dot(cell + vec2(1, 1), vec2(127.1, 311.7)))) * 43758.5453);
+    return mix(mix(n.x, n.y, f.x), mix(n.z, n.w, f.x), f.y);
+  }
 
   void main() {
     vec3 dir = normalize(vWorldPosition);
@@ -60,6 +72,13 @@ export const skyFragmentShader = /* glsl */ `
 
     vec3 sunColor = vec3(1.0, 0.92, 0.65);
     skyColor += sunColor * (sunDisc + coronaTight + coronaWide);
+
+    // A slowly drifting cloud layer, projected onto a plane above the highway.
+    vec2 cloudUV = dir.xz / max(dir.y, 0.08) * 1.6 + vec2(uTime * 0.012, 0.0);
+    float cloud = cloudNoise(cloudUV) * 0.65 + cloudNoise(cloudUV * 2.7) * 0.35;
+    float coverage = smoothstep(0.52, 0.78, cloud) * smoothstep(0.03, 0.22, dir.y);
+    vec3 cloudColor = mix(vec3(0.56, 0.38, 0.43), vec3(1.0, 0.78, 0.56), pow(sunDot, 3.0));
+    skyColor = mix(skyColor, cloudColor, coverage * 0.65);
 
     gl_FragColor = vec4(skyColor, 1.0);
   }

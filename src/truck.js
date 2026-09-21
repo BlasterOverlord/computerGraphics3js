@@ -144,9 +144,6 @@ export async function loadTruck() {
 
   return {
     truckGroup,
-    truckModel,
-    wheels,
-    size,
     update,
   };
 }

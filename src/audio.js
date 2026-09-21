@@ -33,10 +33,6 @@ class SoundManager {
     callback(this.playing);
   }
 
-  removeListener(callback) {
-    this.listeners = this.listeners.filter((fn) => fn !== callback);
-  }
-
   _notify() {
     for (const fn of this.listeners) {
       fn(this.playing);
@@ -60,11 +56,25 @@ class SoundManager {
         });
       }
     }
-    return this.playing;
   }
 
-  isPlaying() {
-    return this.playing;
+  async honk() {
+    // Load only on a user gesture; reuse one element to prevent overlapping horns.
+    if (this.hornPending || (this.horn && !this.horn.paused)) return;
+    this.hornPending = true;
+    try {
+      if (!this.horn) {
+        this.horn = new Audio(import.meta.env.BASE_URL + 'sounds/truck-horn.mp3');
+        this.horn.volume = 0.7;
+      }
+      if (this.horn.error) this.horn.load();
+      this.horn.currentTime = 0;
+      await this.horn.play();
+    } catch (error) {
+      console.warn('Horn unavailable. Add an MP3 at public/sounds/truck-horn.mp3.', error);
+    } finally {
+      this.hornPending = false;
+    }
   }
 }
 

@@ -130,6 +130,7 @@ export async function buildScene(scene, sunLight) {
     fragmentShader: skyFragmentShader,
     uniforms: {
       uSunDirection: { value: sunDirection },
+      uTime: { value: 0 },
     },
     side:       THREE.BackSide,
     depthWrite: false,
@@ -376,14 +377,13 @@ export async function buildScene(scene, sunLight) {
 
     trafficVehicles.push({
       group:      carGroup,
-      lane:       def.lane,
       speed:      def.speed,
-      isOncoming: true,
     });
   });
 
   // ── 6. Per-Frame Update Function ──────────────────────────────────────────
   function update(delta, highwaySpeed = 1.0, camera) {
+    skyMat.uniforms.uTime.value += delta;
     // Slower, more relaxing cruising highway speed
     const driveDelta = highwaySpeed * delta * 14.0;
 
@@ -419,14 +419,11 @@ export async function buildScene(scene, sunLight) {
     if (camera) {
       roadShaderMat.uniforms.uCameraPosition.value.copy(camera.position);
     }
-    roadShaderMat.uniforms.uSunPosition.value.copy(sunLight.position);
   }
 
   return {
     sunMesh,
     sunDirection,
-    skyMat,
-    roadShaderMat,
     update,
   };
 }
