@@ -19,7 +19,7 @@ import {
   asphaltVertexShader,
   asphaltFragmentShader,
 } from './shaders.js';
-import { createRoadTexture, createFieldTexture } from './textures.js';
+import { loadEnvironmentTextures } from './textures.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Highway Dimensions & Constants
@@ -29,16 +29,26 @@ const NUM_SEGMENTS   = 3;   // Total 3 segments = 420 units continuous loop
 const ROAD_WIDTH     = 10.5;
 const LANE_OFFSET    = 2.7; // Right lane = +2.7, Left lane = -2.7
 
-// Textures
-const texRoad  = createRoadTexture();
-const texField = createFieldTexture();
+// Seamless environment textures are local assets; GLB materials remain untouched.
+const environmentTextures = loadEnvironmentTextures();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Create a sleek, smoothly connected highway streetlight
 // ─────────────────────────────────────────────────────────────────────────────
 function makeStreetlight(isRightSide = true) {
   const group = new THREE.Group();
-  const poleMat = new THREE.MeshStandardMaterial({ color: 0x55606A, metalness: 0.85, roughness: 0.25 });
+  const poleMat = new THREE.MeshStandardMaterial({
+    map: environmentTextures.streetlightPole,
+    color: 0x55606A,
+    metalness: 0.85,
+    roughness: 0.25,
+  });
+  const fixtureMat = new THREE.MeshStandardMaterial({
+    map: environmentTextures.streetlightFixture,
+    color: 0x55606A,
+    metalness: 0.85,
+    roughness: 0.25,
+  });
   const lampMat = new THREE.MeshBasicMaterial({ color: 0xFFF2C0 });
 
   // Main vertical mast
@@ -60,7 +70,7 @@ function makeStreetlight(isRightSide = true) {
 
   // Lamp fixture housing
   const headGeo = new THREE.BoxGeometry(0.75, 0.16, 0.35);
-  const lampHead = new THREE.Mesh(headGeo, poleMat);
+  const lampHead = new THREE.Mesh(headGeo, fixtureMat);
   lampHead.position.set(isRightSide ? -2.4 : 2.4, 8.2, 0);
   group.add(lampHead);
 
@@ -82,10 +92,21 @@ function makeStreetlight(isRightSide = true) {
 // ─────────────────────────────────────────────────────────────────────────────
 function makeGuardrail(length = SEGMENT_LENGTH) {
   const group = new THREE.Group();
-  const metalMat = new THREE.MeshStandardMaterial({ color: 0xC0C8D0, metalness: 0.9, roughness: 0.25 });
+  const beamMat = new THREE.MeshStandardMaterial({
+    map: environmentTextures.guardrailBeam,
+    color: 0xC0C8D0,
+    metalness: 0.9,
+    roughness: 0.25,
+  });
+  const postMat = new THREE.MeshStandardMaterial({
+    map: environmentTextures.guardrailPost,
+    color: 0xC0C8D0,
+    metalness: 0.9,
+    roughness: 0.25,
+  });
 
   // Continuous rail beam
-  const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.32, length), metalMat);
+  const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.32, length), beamMat);
   rail.position.y = 0.72;
   rail.castShadow = true;
   rail.receiveShadow = true;
@@ -95,7 +116,7 @@ function makeGuardrail(length = SEGMENT_LENGTH) {
   const postGeo = new THREE.BoxGeometry(0.12, 0.85, 0.12);
   const numPosts = Math.floor(length / 5);
   for (let i = 0; i <= numPosts; i++) {
-    const post = new THREE.Mesh(postGeo, metalMat);
+    const post = new THREE.Mesh(postGeo, postMat);
     post.position.set(0, 0.42, -length / 2 + i * 5);
     post.castShadow = true;
     group.add(post);
@@ -150,7 +171,7 @@ export async function buildScene(scene, sunLight) {
     vertexShader:   asphaltVertexShader,
     fragmentShader: asphaltFragmentShader,
     uniforms: {
-      uRoadTexture:    { value: texRoad },
+      uRoadTexture:    { value: environmentTextures.road },
       uSunPosition:    { value: sunLight.position },
       uSunColor:       { value: new THREE.Color(1.0, 0.88, 0.6) },
       uAmbientColor:   { value: new THREE.Color(0.25, 0.2, 0.25) },
@@ -204,7 +225,11 @@ export async function buildScene(scene, sunLight) {
     });
 
     // Paved gravel shoulders
-    const gravelMat = new THREE.MeshStandardMaterial({ color: 0x3A322C, roughness: 0.95 });
+    const gravelMat = new THREE.MeshStandardMaterial({
+      map: environmentTextures.gravel,
+      color: 0x3A322C,
+      roughness: 0.95,
+    });
     [-1, 1].forEach(side => {
       const shoulder = new THREE.Mesh(
         new THREE.PlaneGeometry(1.8, SEGMENT_LENGTH),
@@ -217,7 +242,10 @@ export async function buildScene(scene, sunLight) {
     });
 
     // Textured green roadside terrain
-    const fieldMat = new THREE.MeshStandardMaterial({ map: texField, roughness: 0.95 });
+    const fieldMat = new THREE.MeshStandardMaterial({
+      map: environmentTextures.terrain,
+      roughness: 0.95,
+    });
     [-1, 1].forEach(side => {
       const terrain = new THREE.Mesh(
         new THREE.PlaneGeometry(120, SEGMENT_LENGTH),

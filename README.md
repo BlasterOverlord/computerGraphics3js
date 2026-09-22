@@ -12,7 +12,7 @@
    - [1. Custom GLSL Shaders](#1-custom-glsl-shaders)
    - [2. Lighting Architecture & Shadow Mapping](#2-lighting-architecture--shadow-mapping)
    - [3. Camera & Perspective Projection](#3-camera--perspective-projection)
-   - [4. Texturing System (UV & Procedural Canvas)](#4-texturing-system-uv--procedural-canvas)
+   - [4. Texturing System (UV & Image Textures)](#4-texturing-system-uv--image-textures)
    - [5. Animation & Infinite Highway Mechanics](#5-animation--infinite-highway-mechanics)
    - [6. User Interaction (Mouse & Keyboard)](#6-user-interaction-mouse--keyboard)
 6. [Controls & Hotkeys Reference](#-controls--hotkeys-reference)
@@ -65,7 +65,7 @@ The project demonstrates core principles of modern 3D computer graphics:
 | **1. Custom Shaders** | Custom GLSL vertex & fragment shaders | • **Atmospheric Sky Shader**: Simulates Rayleigh/Mie scattering sunset gradient + dynamic glowing solar disc & corona.<br>• **Blinn-Phong Road Shader**: Calculates specular sheen (wet/smooth asphalt reflection) and diffuse lighting from moving sun. | [`src/shaders.js`](file:///c:/code/computerGraphics3js/src/shaders.js) | ✅ 100% Pass |
 | **2. Implementation of Lighting** | Multiple light sources & interaction | • **Directional Sun Light** with 2048x2048 PCFSoftShadowMap.<br>• **Ambient Twilight Light** for soft base illumination.<br>• **Hemisphere Light** for sky-to-ground bounce.<br>• **Highway Streetlights** (curved poles with warm downward point lights).<br>• **Vehicle Headlights & Taillights** (spotlights & glowing lens meshes). | [`src/main.js`](file:///c:/code/computerGraphics3js/src/main.js)<br>[`src/scene.js`](file:///c:/code/computerGraphics3js/src/scene.js)<br>[`src/truck.js`](file:///c:/code/computerGraphics3js/src/truck.js) | ✅ 100% Pass |
 | **3. Perspective Projection** | Camera with perspective projection | `THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000)` initialized with realistic FOV and dynamic aspect ratio update on resize. | [`src/main.js`](file:///c:/code/computerGraphics3js/src/main.js) | ✅ 100% Pass |
-| **4. Texture for Each Object** | UV / procedural textures on all geometry | • **Truck body & wheels**: Authentic UV diffuse textures.<br>• **Highway asphalt**: Procedural Canvas2D texture with asphalt grain speckles and lane markings.<br>• **Roadside terrain**: Procedural crop field texture with furrow lines.<br>• **Guardrails & Streetlights**: Metalness/roughness PBR materials.<br>• **Trees & Traffic**: UV mapped textures. | [`src/truck.js`](file:///c:/code/computerGraphics3js/src/truck.js)<br>[`src/textures.js`](file:///c:/code/computerGraphics3js/src/textures.js)<br>[`src/scene.js`](file:///c:/code/computerGraphics3js/src/scene.js) | ✅ 100% Pass |
+| **4. Texture for Each Object** | UV / image textures on all geometry | • **Truck body & wheels**: Authentic UV diffuse textures.<br>• **Highway asphalt**: Seamless local CC0 asphalt image sampled by the custom road shader.<br>• **Roadside terrain & shoulders**: Seamless local CC0 grass/soil and gravel images.<br>• **Guardrails & Streetlights**: Local weathered-metal image maps with their original metalness/roughness values preserved.<br>• **Trees & Traffic**: Original embedded GLB materials, unchanged. | [`src/truck.js`](file:///c:/code/computerGraphics3js/src/truck.js)<br>[`src/textures.js`](file:///c:/code/computerGraphics3js/src/textures.js)<br>[`src/scene.js`](file:///c:/code/computerGraphics3js/src/scene.js) | ✅ 100% Pass |
 | **5. Animation** | Wheel rotation & motion | • **Wheel Rotation**: Truck wheels rotate around local axles in forward direction proportional to driving delta.<br>• **Infinite Highway**: 3-segment modular road system endlessly recycled.<br>• **Traffic Flow**: Oncoming vehicles travel along opposite lane.<br>• **Engine Vibration**: Subtle rhythmic idle vibration on truck cab. | [`src/truck.js`](file:///c:/code/computerGraphics3js/src/truck.js)<br>[`src/scene.js`](file:///c:/code/computerGraphics3js/src/scene.js) | ✅ 100% Pass |
 | **6. Interaction: Keyboard** | Camera moves around truck | Arrow keys (<kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>) and <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> smoothly orbit the camera azimuthally and vertically around the truck center in spherical coordinates. Keys <kbd>1</kbd>, <kbd>2</kbd>, <kbd>3</kbd> provide instant preset views. | [`src/controls.js`](file:///c:/code/computerGraphics3js/src/controls.js) | ✅ 100% Pass |
 | **7. Interaction: Mouse** | Light position rotates around truck | Moving the mouse horizontally and vertically dynamically calculates spherical coordinates for the directional sun light, rotating the sun disc across the sky dome and casting real-time rotating soft shadows. | [`src/controls.js`](file:///c:/code/computerGraphics3js/src/controls.js) | ✅ 100% Pass |
@@ -119,7 +119,7 @@ computerGraphics3js/
     ├── truck.js            # Truck loading, scale/pivot normalization, headlights, wheel animation
     ├── shaders.js          # Custom GLSL vertex & fragment shaders (Sky & Asphalt)
     ├── controls.js         # Keyboard camera orbit & mouse sun light rotation manager
-    ├── textures.js         # Procedural HTML5 Canvas asphalt & terrain texture generators
+    ├── textures.js         # Local seamless environment image texture loader/configuration
     └── audio.js            # HTML5 Audio manager with reactive UI synchronization
 ```
 
@@ -196,23 +196,18 @@ Implemented in [`src/main.js`](file:///c:/code/computerGraphics3js/src/main.js) 
 
 ---
 
-### 4. Texturing System (UV & Procedural Canvas)
+### 4. Texturing System (UV & Image Textures)
 Implemented in [`src/textures.js`](file:///c:/code/computerGraphics3js/src/textures.js).
 
-- **Procedural Canvas2D Generation**:
-  - Eliminates external image dependency issues and optimizes bundle size.
-  - **Asphalt Texture (`createRoadTexture`)**:
-    - Linear gradient base simulating tire wear in lane paths.
-    - Loop generating 4,000 randomized micro-speckles with varying alpha and brightness simulating granular bitumen composition.
-    - Solid white shoulder lines and dashed yellow center guidance line drawn with exact pixel coordinates.
-    - Wrapped with `THREE.RepeatWrapping` (`repeat.set(1, 6)`).
-  - **Paddy/Crop Field Texture (`createFieldTexture`)**:
-    - Multi-stop golden-green gradient.
-    - Horizontal crop furrow lines with pseudo-random undulating displacement.
-    - Wrapped with `repeat.set(4, 8)` to eliminate visual repetition over vast roadside ground planes.
+- **Local seamless image textures**:
+  - CC0 1K diffuse maps are stored in `public/textures/`, so rendering has no runtime image dependency on external hosts.
+  - Asphalt remains sampled by the existing custom road shader; lane and edge markings remain separate intentional materials.
+  - Grass/soil terrain and gravel shoulders use independently scaled repeat wrapping appropriate to their geometry.
+  - Guardrail beams/posts and streetlight poles/fixtures use separate weathered-metal texture instances while retaining their original PBR metalness and roughness values.
+  - Source, author, and license details are recorded in [`public/textures/ATTRIBUTION.md`](file:///c:/code/computerGraphics3js/public/textures/ATTRIBUTION.md).
 - **3D Model UV Textures**:
   - `truck.glb` contains authentic UV diffuse maps for the truck cab, wooden flatbed with Bengali typography (*"সাধারণ পরিবহন"*), mudguards, and tire treads.
-  - PBR roughness and metalness values are automatically normalized upon import.
+  - Imported truck, tree, and traffic GLB materials are left unchanged.
 
 ---
 
