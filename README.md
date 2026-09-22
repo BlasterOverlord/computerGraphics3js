@@ -2,6 +2,7 @@
 > Built with **Three.js (WebGL)**, **GLSL Shaders**, and **Vite**.
 
 ---
+---
 
 ## 📖 Table of Contents
 1. [Project Overview](#-project-overview)
@@ -354,5 +355,4 @@ All external 3D models, audio, and utilities used in this project are documented
 | **Roadside Deciduous Tree** | [`public/models/tree.glb`](file:///c:/code/computerGraphics3js/public/models/tree.glb) | **Javi Agenjo** (`jagenjo/GTR_Framework`) | [GitHub Repository](https://github.com/jagenjo/GTR_Framework) • [Raw Model](https://raw.githubusercontent.com/jagenjo/GTR_Framework/master/data/prefabs/tree.glb) | Realistic deciduous tree prefabs lining the highway outer banks. |
 | **Highway Ambient Sound** | [`public/sounds/highway.mp3`](file:///c:/code/computerGraphics3js/public/sounds/highway.mp3) | **Highway Traffic Audio** | [Local Audio Path](file:///c:/code/computerGraphics3js/public/sounds/highway.mp3) | Continuous looping ambient highway road hiss and vehicle engine sound. |
 | **Draco 3D Geometry Decoder** | Web CDN | **Google Draco** | [Google Draco CDN](https://www.gstatic.com/draco/versioned/decoders/1.5.7/) | Used by `DRACOLoader` in `scene.js` for fast decompression of compressed GLTF models. |
-#   c o m p u t e r G r a p h i c s 3 j s  
- 
+#
